@@ -7,8 +7,6 @@ import yaml
 import base64
 from PIL import Image
 import io
-import json
-from datetime import datetime
 
 # Load environment variables from .env file
 load_dotenv()
@@ -135,9 +133,6 @@ for message in st.session_state.messages:
         else:
             st.markdown(message["content"])
 
-# Add a system message input
-system_message = st.sidebar.text_area("System Message", value="You are a helpful AI assistant.")
-
 if prompt := st.chat_input("Enter your prompt here..."):
     # Prepare the message content
     message_content = [{"type": "text", "text": prompt}]
@@ -163,14 +158,11 @@ if prompt := st.chat_input("Enter your prompt here..."):
         chat_completion = client.chat.completions.create(
             model=model_option,
             messages=[
-                {"role": "system", "content": system_message},
-                *[
-                    {
-                        "role": m["role"],
-                        "content": m["content"]
-                    }
-                    for m in st.session_state.messages
-                ]
+                {
+                    "role": m["role"],
+                    "content": m["content"]
+                }
+                for m in st.session_state.messages
             ],
             max_tokens=max_tokens,
             temperature=0.7,
@@ -198,12 +190,12 @@ if st.sidebar.button("Clear Chat"):
 
 # Add a download chat history button
 if st.sidebar.button("Download Chat History"):
-    chat_history = json.dumps(st.session_state.messages, indent=2)
+    chat_history = "\n".join([f"{m['role'].capitalize()}: {m['content']}" for m in st.session_state.messages])
     st.download_button(
-        label="Download Chat History (JSON)",
+        label="Download Chat History",
         data=chat_history,
-        file_name=f"chat_history_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
-        mime="application/json",
+        file_name="chat_history.txt",
+        mime="text/plain",
     )
 
 # Add a prompt templates section
@@ -217,94 +209,3 @@ if template_options:
         st.experimental_rerun()
 else:
     st.sidebar.info("No prompt templates available.")
-
-# Add a temperature slider
-temperature = st.sidebar.slider(
-    "Temperature:",
-    min_value=0.0,
-    max_value=1.0,
-    value=0.7,
-    step=0.1,
-    help="Adjust the randomness of the model's output. Lower values make the output more deterministic, while higher values make it more creative."
-)
-
-# Add a feature to save favorite responses
-if st.sidebar.button("Save Current Response"):
-    if st.session_state.messages and st.session_state.messages[-1]["role"] == "assistant":
-        favorite_response = st.session_state.messages[-1]["content"]
-        if "favorite_responses" not in st.session_state:
-            st.session_state.favorite_responses = []
-        st.session_state.favorite_responses.append(favorite_response)
-        st.sidebar.success("Response saved!")
-    else:
-        st.sidebar.warning("No assistant response to save.")
-
-# Display favorite responses
-if "favorite_responses" in st.session_state and st.session_state.favorite_responses:
-    st.sidebar.header("Favorite Responses")
-    for i, response in enumerate(st.session_state.favorite_responses):
-        if st.sidebar.button(f"Load Favorite {i+1}"):
-            st.session_state.messages.append({"role": "assistant", "content": response})
-            st.experimental_rerun()
-
-# Add a feature to export chat history to PDF
-if st.sidebar.button("Export Chat to PDF"):
-    try:
-        from reportlab.lib.pagesizes import letter
-        from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
-        from reportlab.lib.styles import getSampleStyleSheet
-        from io import BytesIO
-
-        def create_pdf(chat_history):
-            buffer = BytesIO()
-            doc = SimpleDocTemplate(buffer, pagesize=letter)
-            styles = getSampleStyleSheet()
-            flowables = []
-
-            for message in chat_history:
-                role = message["role"].capitalize()
-                content = message["content"]
-                if isinstance(content, list):
-                    content = " ".join([item["text"] for item in content if item["type"] == "text"])
-                paragraph = Paragraph(f"<b>{role}:</b> {content}", styles['Normal'])
-                flowables.append(paragraph)
-                flowables.append(Spacer(1, 12))
-
-            doc.build(flowables)
-            return buffer.getvalue()
-
-        pdf = create_pdf(st.session_state.messages)
-        st.download_button(
-            label="Download Chat History (PDF)",
-            data=pdf,
-            file_name=f"chat_history_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf",
-            mime="application/pdf",
-        )
-    except ImportError:
-        st.sidebar.error("ReportLab is not installed. Please install it to enable PDF export.")
-
-# Add a feature to summarize the conversation
-if st.sidebar.button("Summarize Conversation"):
-    if st.session_state.messages:
-        summary_prompt = "Please provide a brief summary of the conversation so far, highlighting the main points and any conclusions reached."
-        
-        try:
-            summary_completion = client.chat.completions.create(
-                model=model_option,
-                messages=[
-                    {"role": "system", "content": "You are a helpful AI assistant tasked with summarizing conversations."},
-                    *[{"role": m["role"], "content": m["content"]} for m in st.session_state.messages],
-                    {"role": "user", "content": summary_prompt}
-                ],
-                max_tokens=max_tokens // 2,  # Use half the max tokens for summary
-                temperature=0.5,
-                stream=True
-            )
-
-            with st.sidebar.expander("Conversation Summary", expanded=True):
-                summary_generator = generate_chat_responses(summary_completion)
-                summary = st.write_stream(summary_generator)
-        except Exception as e:
-            st.sidebar.error(f"Error generating summary: {e}", icon="🚨")
-    else:
-        st.sidebar.info("No conversation to summarize yet.")
