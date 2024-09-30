@@ -1,6 +1,5 @@
 streamlit
-groq
-python-dotenv
-PyYAML
 Pillow
-reportlab
+together
+boto3
+python-dotenv
