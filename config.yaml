@@ -1,0 +1,79 @@
+models:
+  llama-3.1-70b-versatile:
+    name: "Llama 3.1 70B Versatile"
+    developer: "Meta/Groq"
+    description: "Large versatile language model"
+    tokens: 8192
+    vision_capable: false
+
+  llama-3.1-8b-instant:
+    name: "Llama 3.1 8B Instant"
+    developer: "Meta/Groq"
+    description: "Fast, smaller language model"
+    tokens: 4096
+    vision_capable: false
+
+  llama-3.2-11b-text-preview:
+    name: "Llama 3.2 11B Text Preview"
+    developer: "Meta/Groq"
+    description: "Preview of Llama 3.2 for text tasks"
+    tokens: 8192
+    vision_capable: false
+
+  llama-3.2-11b-vision-preview:
+    name: "Llama 3.2 11B Vision Preview"
+    developer: "Meta/Groq"
+    description: "Vision-capable Llama 3.2 model"
+    tokens: 8192
+    vision_capable: true
+
+  llama-3.2-1b-preview:
+    name: "Llama 3.2 1B Preview"
+    developer: "Meta/Groq"
+    description: "Small preview model of Llama 3.2"
+    tokens: 4096
+    vision_capable: false
+
+  llama-3.2-3b-preview:
+    name: "Llama 3.2 3B Preview"
+    developer: "Meta/Groq"
+    description: "Medium-sized preview model of Llama 3.2"
+    tokens: 4096
+    vision_capable: false
+
+  llama-3.2-90b-text-preview:
+    name: "Llama 3.2 90B Text Preview"
+    developer: "Meta/Groq"
+    description: "Large preview model of Llama 3.2 for text tasks"
+    tokens: 8192
+    vision_capable: false
+
+  llama-guard-3-8b:
+    name: "Llama Guard 3 8B"
+    developer: "Meta/Groq"
+    description: "Specialized model for content moderation"
+    tokens: 4096
+    vision_capable: false
+
+  llama3-70b-8192:
+    name: "Llama 3 70B (8192 context)"
+    developer: "Meta/Groq"
+    description: "Large Llama 3 model with extended context"
+    tokens: 8192
+    vision_capable: false
+
+  llama3-8b-8192:
+    name: "Llama 3 8B (8192 context)"
+    developer: "Meta/Groq"
+    description: "Smaller Llama 3 model with extended context"
+    tokens: 8192
+    vision_capable: false
+
+default_max_tokens: 1024
+
+prompt_templates:
+  analyze_image: "Please analyze the uploaded image and describe what you see in detail."
+  summarize_text: "Please summarize the following text in a concise manner:"
+  explain_code: "Please explain the following code and its functionality:"
+  creative_writing: "Write a short story based on the following prompt:"
+  data_analysis: "Analyze the following data and provide insights:"
