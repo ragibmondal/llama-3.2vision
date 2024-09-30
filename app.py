@@ -4,31 +4,20 @@ from PIL import Image
 import io
 import base64
 from together import Together
-import boto3
 
 # Set up Together AI client
 together_api_key = os.environ.get('TOGETHER_API_KEY')
 client = Together(api_key=together_api_key)
 
-# Set up S3 client for image upload
-s3_client = boto3.client('s3',
-    aws_access_key_id=os.environ.get('AWS_ACCESS_KEY_ID'),
-    aws_secret_access_key=os.environ.get('AWS_SECRET_ACCESS_KEY')
-)
-BUCKET_NAME = 'your-s3-bucket-name'
+def encode_image(image):
+    """Encode image to base64"""
+    buffered = io.BytesIO()
+    image.save(buffered, format="PNG")
+    return base64.b64encode(buffered.getvalue()).decode('utf-8')
 
-def upload_image_to_s3(image):
-    """Upload image to S3 and return the URL"""
-    img_byte_arr = io.BytesIO()
-    image.save(img_byte_arr, format='JPEG')
-    img_byte_arr = img_byte_arr.getvalue()
-
-    key = f"uploaded_images/{base64.b64encode(os.urandom(8)).decode('utf-8')}.jpg"
-    s3_client.put_object(Bucket=BUCKET_NAME, Key=key, Body=img_byte_arr)
-    return f"s3://{BUCKET_NAME}/{key}"
-
-def analyze_image(image_url):
+def analyze_image(image):
     """Analyze the image using Together AI API"""
+    encoded_image = encode_image(image)
     response = client.chat.completions.create(
         model="meta-llama/Llama-3.2-11B-Vision-Instruct-Turbo",
         messages=[
@@ -42,7 +31,7 @@ def analyze_image(image_url):
                     {
                         "type": "image_url",
                         "image_url": {
-                            "url": image_url
+                            "url": f"data:image/png;base64,{encoded_image}"
                         }
                     }
                 ]
@@ -80,8 +69,7 @@ def single_image_analysis():
 
         if st.button("Analyze Image"):
             with st.spinner("Analyzing image..."):
-                image_url = upload_image_to_s3(image)
-                analysis = analyze_image(image_url)
+                analysis = analyze_image(image)
                 st.subheader("Image Analysis")
                 st.write(analysis)
 
@@ -103,11 +91,8 @@ def image_comparison():
 
         if st.button("Compare Images"):
             with st.spinner("Analyzing images..."):
-                image_url1 = upload_image_to_s3(image1)
-                image_url2 = upload_image_to_s3(image2)
-
-                analysis1 = analyze_image(image_url1)
-                analysis2 = analyze_image(image_url2)
+                analysis1 = analyze_image(image1)
+                analysis2 = analyze_image(image2)
 
                 st.subheader("Image 1 Analysis")
                 st.write(analysis1)
